@@ -97,7 +97,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D87A186221B481CD00BB65A3 /* Build configuration list for PBXProject "firstProcess" */;
+			buildConfigurationList = D87A186221B481CD00BB65A3 /* Build configuration list for PBXProject "sudokuValidator" */;
 			compatibilityVersion = "Xcode 8.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -245,6 +245,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				CONFIGURATION_TEMP_DIR = /Users/adarshjoseph/Desktop/repos/Projects/firstMultithreadedProject;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -252,7 +253,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D87A186221B481CD00BB65A3 /* Build configuration list for PBXProject "firstProcess" */ = {
+		D87A186221B481CD00BB65A3 /* Build configuration list for PBXProject "sudokuValidator" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D87A186C21B481CD00BB65A3 /* Debug */,

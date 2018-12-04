@@ -15,6 +15,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <limits>
 #include <future>
 #include <chrono>
 #include <deque>
@@ -22,24 +23,7 @@
 #include <unistd.h>
 using namespace std;
 
-//class Line{
-//public:
-//    const int num;
-//    const string contents;
-//    bool status=true;
-//
-//    Line(int no, string ln) : num(no), contents(ln){}
-//
-//    void ProcessLine(thread t1){
-//        cout<<this->num<<":"<<this->contents<<endl;
-//        t1.join();
-//    }
-//
-//    void EvalRows(){
-//
-//    }
-//
-//};
+static atomic<int> TOTAL_THREAD_COUNT={1};
 
 class Line{
 public:
@@ -57,6 +41,7 @@ public:
     }
     
     void EvalRow(){
+        TOTAL_THREAD_COUNT++;
         if(this->contents.size()!=81){markInvalid();return;}
         for(int i=0; i<81; i+=9){
             unordered_set<char> rowSet;
@@ -67,7 +52,6 @@ public:
                         rowSet.insert(this->contents[k]);
                     }
                     else{
-//                        cout<<"HERE:"<<this->contents[k]<<endl;
                         markInvalid();return;
                     }
                 }
@@ -76,6 +60,7 @@ public:
     }
     
     void EvalCol(){
+        TOTAL_THREAD_COUNT++;
         for(int i=0; i<9; i++){
             unordered_set<char> colSet;
             for(int j=0; j<81; j+=9){
@@ -85,7 +70,6 @@ public:
                         colSet.insert(this->contents[k]);
                     }
                     else{
-//                        cout<<"HERE:"<<this->contents[k]<<endl;
                         markInvalid();return;
                     }
                 }
@@ -94,6 +78,7 @@ public:
     }
     
     void EvalSquare(){
+        TOTAL_THREAD_COUNT++;
         int arr[9] = {0,3,6,27,30,33,54,57,60};
         for(int i=0; i<9; i++){
             int val = arr[i];
@@ -106,7 +91,6 @@ public:
                             sqSet.insert(this->contents[m]);
                         }
                         else{
-//                            cout<<"HERE:"<<this->contents[k]<<endl;
                             markInvalid();return;
                         }
                     }
@@ -118,12 +102,9 @@ public:
 
 static bool input_done=false;
 
-//struct Status{
-//    const int num;
-//    bool status=true;
-//};
 
 void ReadFile(string file_name, mutex &line_mx, list<shared_ptr<Line>> &input_lines){
+    TOTAL_THREAD_COUNT++;
     ifstream slist(file_name);
     string each_line;
     static int line_number=1;
@@ -131,24 +112,23 @@ void ReadFile(string file_name, mutex &line_mx, list<shared_ptr<Line>> &input_li
         if(each_line.size()<=1){continue;}
         istringstream iss(each_line);
         shared_ptr<Line> shr_line_ptr = make_shared<Line>(line_number, each_line);
-//        Line line_obj(line_number, each_line);
-//        Line* line_obj_ptr = &line_obj;
         line_mx.lock();
         input_lines.push_back(shr_line_ptr);
         line_mx.unlock();
         line_number++;
     }
-    cout<<"read done"<<endl;
+//    cout<<"read done"<<endl;
 }
 
 bool ProcessLine(mutex &line_mx, list<shared_ptr<Line>> &input_lines, mutex &output_mx, ofstream &outFile){
+    TOTAL_THREAD_COUNT++;
 //    cout<<"process"<<endl;
     shared_ptr<Line> this_line=nullptr;
     line_mx.lock();
     if(!input_done){
         this_line = input_lines.front();
         input_lines.pop_front();
-        cout<<"Creating worker #"<<this_line->num<<endl;
+//        cout<<"Creating worker #"<<this_line->num<<endl;
         if(input_lines.empty()){input_done=true;}
     }
     line_mx.unlock();
@@ -179,14 +159,26 @@ std::string get_working_path()
 
 int main(int argc, const char * argv[]) {
     using namespace std::chrono_literals;
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     string file_name;
-    cout << "Get File link:";
+//    cout << "Get File link:";
 //    cin>>file_name;
-    file_name= "/Users/adarshjoseph/Desktop/repos/Projects/firstMultithreadedProject/sample-all.txt";
+    if(argc==1){
+        cout<<"This tool requires the link to an input text file."<<endl;
+        return 1;
+    }
+    else if(argc==2){
+        file_name= argv[1];
+//        cout<<"input filename:"<<file_name;
+    }
+    else{
+        cout<<"This tool takes only one parameter"<<endl;
+        return 3;
+    }
     static const int max_pool_size=5;
     
     deque<future<bool>> thread_pool;
-    static int thread_count=1;
+//    static int thread_count=1;
     
     static mutex line_mx;
     list<shared_ptr<Line>> input_lines;
@@ -195,12 +187,12 @@ int main(int argc, const char * argv[]) {
     ofstream outFile;
     
     string loc = get_working_path()+ "/output.txt";
-    cout<<loc<<endl;
+    cout<<"Output filename:"<<loc<<endl;
     outFile.open(loc);
     
     async(ReadFile, file_name, std::ref(line_mx), std::ref(input_lines));
 //    readThread.join();
-    cout<<"size:"<<input_lines.size()<<endl;
+    cout<<"Number of sudoku lines:"<<input_lines.size()<<endl;
     while(!input_done){
         while(!input_done && thread_pool.size() < max_pool_size){
 //            cout<<"Adding thread"<<endl;
@@ -208,25 +200,25 @@ int main(int argc, const char * argv[]) {
             continue;
         }
         while(!thread_pool.empty() && thread_pool.front().wait_for(0ms)==std::future_status::ready){
-            cout<<thread_pool.front().get()<<"Finished thread #"<<thread_count<<endl; thread_count++;
+//            cout<<thread_pool.front().get()<<"Finished thread #"<<thread_count<<endl; thread_count++;
             thread_pool.pop_front();
         }
-//        for(auto it=thread_pool.begin(); it!=thread_pool.end();){
-//            cout<<"here"<<endl;
-//            if(it->wait_for(0ms)==std::future_status::ready){thread_pool.erase(it);break;}
-//            else{it++; continue;}
-//        }
     }
-    cout<<"input done, thread pool size:"<<thread_pool.size()<<endl;
+//    cout<<"input done, thread pool size:"<<thread_pool.size()<<endl;
     while(!thread_pool.empty()){
-        cout<<"finally"<<endl;
+//        cout<<"finally"<<endl;
         if(thread_pool.front().wait_for(5ms)==std::future_status::ready){
-            cout<<thread_pool.front().get()<<"Finished thread #"<<thread_count<<endl; thread_count++;
+//            cout<<thread_pool.front().get()<<"Finished thread #"<<thread_count<<endl; thread_count++;
             thread_pool.pop_front();
         }
     }
-
+    cout<<"Total threads spawned:"<<TOTAL_THREAD_COUNT<<endl;
     outFile.close();
+    std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
+    double duration = std::chrono::duration_cast<std::chrono::microseconds>( end_time - start_time ).count();
+    double duration_secs = duration/1000000;
+    cout.precision(std::numeric_limits<double>::max_digits10);
+    cout<<"Total program duration: "<<duration_secs<<"s"<<endl;
     return 0;
 }
 
