@@ -24,6 +24,7 @@
 using namespace std;
 
 static atomic<int> TOTAL_THREAD_COUNT={1};
+static bool input_done=false;
 
 class Line{
 public:
@@ -100,7 +101,6 @@ public:
     }
 };
 
-static bool input_done=false;
 
 
 void ReadFile(string file_name, mutex &line_mx, list<shared_ptr<Line>> &input_lines){
@@ -156,29 +156,38 @@ std::string get_working_path()
     return ( getcwd(temp, sizeof(temp)) ? std::string( temp ) : std::string("") );
 }
 
+bool isFileEmpty(std::ifstream& pFile)
+{
+    return pFile.peek() == std::ifstream::traits_type::eof();
+}
 
 int main(int argc, const char * argv[]) {
     using namespace std::chrono_literals;
-    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();     //Starting timer to measure performance
+    
+    //    Get input File and validate
     string file_name;
-//    cout << "Get File link:";
-//    cin>>file_name;
     if(argc==1){
         cout<<"This tool requires the link to an input text file."<<endl;
         return 1;
     }
     else if(argc==2){
         file_name= argv[1];
-//        cout<<"input filename:"<<file_name;
+        ifstream fileCheck(file_name);
+        if(isFileEmpty(fileCheck)){
+            cout<<"Input file is empty"<<endl;
+            return 4;
+        }
     }
     else{
         cout<<"This tool takes only one parameter"<<endl;
         return 3;
     }
+    
+
     static const int max_pool_size=5;
     
     deque<future<bool>> thread_pool;
-//    static int thread_count=1;
     
     static mutex line_mx;
     list<shared_ptr<Line>> input_lines;
@@ -191,8 +200,7 @@ int main(int argc, const char * argv[]) {
     outFile.open(loc);
     
     async(ReadFile, file_name, std::ref(line_mx), std::ref(input_lines));
-//    readThread.join();
-    cout<<"Number of sudoku lines:"<<input_lines.size()<<endl;
+    cout<<"Number of sudoku puzzles:"<<input_lines.size()<<endl;
     while(!input_done){
         while(!input_done && thread_pool.size() < max_pool_size){
 //            cout<<"Adding thread"<<endl;
