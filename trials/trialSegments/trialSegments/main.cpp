@@ -7,7 +7,7 @@
 //
 #include <bitset>
 #include <iostream>
-#include<string>
+#include <string>
 #include <fstream>
 #include <vector>
 using namespace std;
@@ -49,17 +49,13 @@ int main(int argc, const char * argv[]) {
 ////    z.set(0,1);
 //    z.set(8-1,1);
 //    cout<<z<<endl;
-    string a ="ajdlfjaa";
-    string b ="?<>+_|-}";
-    char r[8];
-//    cout<<"a:"<<bitset<8>(a)<<endl;
-    for(int i=0; i<a.size(); i++){
-        cout<<"a:"<<bitset<8>(a[i])<<endl;
-        cout<<"b:"<<bitset<8>(b[i])<<endl;
-        r[i]=a[i]^b[i];
-        bitset<8> x(r[i]);
-        cout<<"r:"<<x<<endl;
-        cout<<"back: "<<r[i]<<endl;
+    ostreambuf_iterator<char> o(cout);
+    string x= "abcdefghijkl";
+    for(int i=0; i<x.size(); i++){
+//        cerr<<i<<endl;
+        *o= x[i];
+        if(i%2==0){i+=2;}
+        else{i-=2;}
     }
     cout<<endl;
 //    char z = (char)ar[1]^ar[2];
